@@ -1,7 +1,7 @@
 {
   "name": "rx-responsive",
   "version": "0.1.0",
-  "description": "RxResponsive is a small responsive library for working with responsive web breakpoints in a responsive, fluid manor",
+  "description": "RxResponsive is a small angular library for working with responsive web breakpoints in a fluid manner using RxJs.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "author": "Kris Mackintosh <kris.mackintosh@gmail.com>",

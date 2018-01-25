@@ -1,6 +1,6 @@
 # RxResponsive
 
-RxResponsive is a small responsive library for working with responsive web breakpoints in a responsive, fluid manor
+RxResponsive is a small angular library for working with responsive web breakpoints in a fluid manner using RxJs.
 
 ## Install
 TBA
