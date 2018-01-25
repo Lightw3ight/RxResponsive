@@ -1,17 +1,23 @@
 {
   "name": "rx-responsive",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "RxResponsive is a small responsive library for working with responsive web breakpoints in a responsive, fluid manor",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "author": "Kris Mackintosh <kris.mackintosh@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e",
     "prebuild": "rimraf ./dist && mkdir dist",
     "build": "ngc -p ./tsconfig.json && tsc -p ./tsconfig.json"
   },
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lightw3ight/RxResponsive.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lightw3ight/RxResponsive/issues",
+    "email": "kris.mackintosh@gmail.com"
+  },
   "dependencies": {
     "@angular/common": "^5.2.0",
     "@angular/compiler": "^5.2.0",
