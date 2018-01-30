@@ -1,21 +1,19 @@
 import { Observable } from 'rxjs/Observable';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { OperatorFactoryService } from './operator-factory.service';
+import { IMediaObservable, TMediaOrOperator, IDynamicMediaConfig, IMediaChain, TMediaMap } from './types';
 
-import { IMediaChain } from './models/media-chain.interface';
-import { IMediaObservable } from './models/media-observable.interface';
-import { IMediaSizeMap } from './models/media-size-map.interface';
-import { MediaSizeOperator } from './media-size-operator.model';
-
-export class MediaObservable extends ReplaySubject<boolean> implements IMediaObservable {
-    private _or: MediaSizeOperator;
+export class MediaObservable<T extends IDynamicMediaConfig> extends ReplaySubject<boolean> implements IMediaObservable<T> {
+    private _or: TMediaOrOperator<T>;
 
     constructor (
-        private _chain: IMediaChain,
-        private _media$: Observable<IMediaSizeMap>
+        private _chain: IMediaChain<T>,
+        private _media$: Observable<TMediaMap<T>>,
+        private _operatorFactory: OperatorFactoryService
     ) {
         super();
         const sub = _media$.subscribe(
-            mm => this.next(this._chain(mm || <IMediaSizeMap>{ })),
+            mm => this.next(this._chain.some(lnk => lnk(mm))),
             err => this.error(err),
             () => {
                 sub.unsubscribe();
@@ -23,16 +21,7 @@ export class MediaObservable extends ReplaySubject<boolean> implements IMediaObs
             });
     }
 
-    public get or () {
-        return this._or || (this._or = new MediaSizeOperator(createOrChain(this._chain), this._media$));
+    public get or (): TMediaOrOperator<T> {
+        return this._or || (this._or = this._operatorFactory.createOrOperator([...this._chain], this._media$));
     }
-}
-
-function createOrChain (chain: IMediaChain): IMediaChain {
-    const newChain: IMediaChain = (m: IMediaSizeMap, condition: () => boolean) => {
-        return chain(m, () => true) || condition();
-    };
-    newChain.conditionIndex = chain.conditionIndex;
-
-    return newChain;
 }

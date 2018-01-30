@@ -2,25 +2,27 @@
 
 RxResponsive is a small angular library for working with responsive web breakpoints in a fluid manner using RxJs.
 
+The default breakpoints are based on bootstrap but you can configure your own strongly typed breakpoints too.
+
 ## Install
-TBA
+`yarn add rx-responsive`
 
 ## Usage:
 
 ### Module setup
-Add the `RxResponsiveModule` as a provider
+Add the `RxResponsiveModule` with `forRoot()` to your root module's imports
 ```typescript
-import { RxResponsiveModule } from 'RxResponsive';
+import { RxResponsiveModule } from 'rx-responsive';
 
 @NgModule({
     imports: [
-        ..
+        RxResponsiveModule.forRoot()
     ],
     declarations: [
         ..
     ],
     providers: [
-        RxResponsiveModule
+        ..
     ],
     bootstrap: [AppComponent]
 })
@@ -30,7 +32,7 @@ export class AppModule {}
 ### Component setup
 Inject the `RxResponsiveService` service publicly
 ```typescript
-import { } from 'RxResponsive';
+import { RxResponsiveService } from 'rx-responsive';
 
 @Component({
     ..
@@ -46,38 +48,38 @@ export class MyComponent {
 Given that you have publicly imported `RxResponsiveService` in your component with a name of `media`
 #### Simple breakpoints
 ```html
-    <div *ngIf="media.is.xs$"></div>
-    <div *ngIf="media.is.sm$"></div>
-    <div *ngIf="media.is.md$"></div>
-    <div *ngIf="media.is.lg$"></div>
-    <div *ngIf="media.is.xl$"></div>
+    <div *ngIf="media.is.xs | async"></div>
+    <div *ngIf="media.is.sm | async"></div>
+    <div *ngIf="media.is.md | async"></div>
+    <div *ngIf="media.is.lg | async"></div>
+    <div *ngIf="media.is.xl | async"></div>
 ```
 
 #### Combined breakpoints
 ```html
-    <div *ngIf="media.is.xs$.or.sm$"></div>
-    <div *ngIf="media.is.lg$.or.xl$"></div>
-    <div *ngIf="media.is.sm$.or.md$.or.lg$"></div>
+    <div *ngIf="media.is.xs.or.sm | async"></div>
+    <div *ngIf="media.is.lg.or.xl | async"></div>
+    <div *ngIf="media.is.sm.or.md.or.lg | async"></div>
 ```
 
 #### greater$ and less$
 ```html
-    <div *ngIf="media.is.md$.or.greater$"></div>
-    <div *ngIf="media.is.lg$.or.less$"></div>
+    <div *ngIf="media.is.md.or.greater | async"></div>
+    <div *ngIf="media.is.lg.or.less | async"></div>
 ```
 
 ### Service API
 #### .snapshot
 A public getter to a snapshot in time of the current breakpoints
 
-`media.snapshot.isMd === true`
+`media.snapshot.md === true`
 
 #### .mediaSize$
 A public getter to the breakpoint observable
 
 ```typescript
     media.mediaSize$.pipe(
-        filter(ms => ms.isLg),
+        filter(ms => ms.lg),
         switchMap(...)
     )
 ```
@@ -85,20 +87,23 @@ A public getter to the breakpoint observable
 ### Configuring breakpoints
 The default breakpoint sizes are based on bootstrap, but you can configure your own breakpoint conditions.
 
-Instead of registering the `RxResponsiveModule` module as a provider, add it as an import using the static `withConfig()` method
+First off, define your own breakpoints as a const somewhere
+```typescript
+export const MyCustomBreakpoints = {
+    mobile: { max: 500 },
+    tablet: { min: 501, max: 1000 }
+    desktop: { max: 1001 }
+}
+```
+
+When importing the module `RxResponsiveModule` pass your breakpoints into the `forRoot()` method
 
 ```typescript
-import { RxResponsiveModule } from 'RxResponsive';
+import { RxResponsiveModule } from 'rx-responsive';
 
 @NgModule({
     imports: [
-        RxResponsiveModule.withConfig({
-            xs: { max: 575 },
-            sm: { min: 576, max: 767 },
-            md: { min: 768, max: 991 },
-            lg: { min: 992, max: 1199 },
-            xl: { min: 1200 },
-        })
+        RxResponsiveModule.withConfig(MyCustomBreakpoints)
     ],
     declarations: [
         ..
@@ -109,4 +114,37 @@ import { RxResponsiveModule } from 'RxResponsive';
     bootstrap: [AppComponent]
 })
 export class AppModule {}
+```
+
+Finally, when importing the `RxResponsiveService` service in your component, add a generic type argument of your custom breakpoints
+
+```typescript
+import { RxResponsiveService } from 'rx-responsive';
+
+@Component({
+    ..
+})
+export class MyComponent {
+    constructor (
+        public media: RxResponsiveService<typeof MyCustomBreakpoints>
+    ) { }
+}
+```
+
+You will then get strong typing of your custom breakpoints
+
+```html
+    <div *ngIf="media.is.mobile | async"></div>
+    <div *ngIf="media.is.tablet.or.greater | async"></div>
+    <div *ngIf="media.is.mobile.or.desktop | async"></div>
+```
+
+```typescript
+    media.mediaSize$.pipe(
+        filter(ms => ms.mobile),
+        switchMap(..)
+    )
+
+    media.is.mobile
+        .subscribe(..)
 ```

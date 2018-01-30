@@ -1,13 +1,13 @@
 {
   "name": "rx-responsive",
-  "version": "0.1.0",
+  "version": "0.9.34",
   "description": "RxResponsive is a small angular library for working with responsive web breakpoints in a fluid manner using RxJs.",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "author": "Kris Mackintosh <kris.mackintosh@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "prebuild": "rimraf ./dist && mkdir dist",
+    "prebuild": "rimraf ./dist ./compiled && mkdir dist",
     "build": "ngc -p ./tsconfig.json && tsc -p ./tsconfig.json"
   },
   "repository": {

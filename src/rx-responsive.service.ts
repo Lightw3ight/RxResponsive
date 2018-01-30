@@ -1,49 +1,42 @@
 import { Injectable, Inject, NgZone } from '@angular/core';
-import { IRxResponsiveServiceConfig, IBreakpointConstraint } from './models/rx-responsive-service-config.interface';
-import { IMediaSizeMap } from './models/media-size-map.interface';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
-import { MediaSizeOperator } from './media-size-operator.model';
-import { IMediaChain } from './models/media-chain.interface';
+import { OperatorFactoryService } from './operator-factory.service';
+import { IDynamicMediaConfig, TMediaMap, TMediaIsOperator, IBreakpointConstraint } from './types';
+import { DEFAULT_CONFIGURATION } from './default-configuration.model';
 
 @Injectable()
-export class RxResponsiveService {
-    private _snapshot: IMediaSizeMap;
-    private _mediaSize$: BehaviorSubject<IMediaSizeMap>;
-    private _is: MediaSizeOperator;
+export class RxResponsiveService<T extends IDynamicMediaConfig = typeof DEFAULT_CONFIGURATION> {
+    private _snapshot: TMediaMap<T> = <any>{ };
+    private _mediaSize$: BehaviorSubject<TMediaMap<T>>;
+    private _is: TMediaIsOperator<T>;
 
-    public get mediaSize$ (): Observable<IMediaSizeMap> {
+    public get mediaSize$ (): Observable<TMediaMap<T>> {
         return this._mediaSize$;
     }
 
-    public get snapshot (): IMediaSizeMap {
+    public get snapshot (): TMediaMap<T> {
         return this._snapshot;
     }
 
-    public get is (): MediaSizeOperator {
-        return this._is || (this._is = new MediaSizeOperator(createIsChain(), this.mediaSize$));
+    public get is(): TMediaIsOperator<T>  {
+        return this._is || (this._is = this._operatorFactory.createIsOperator(this.mediaSize$));
     }
 
     constructor (
-        @Inject('RX_RESPONSIVE_SERVICE_CONFIG') private _config: IRxResponsiveServiceConfig,
+        @Inject('RX_RESPONSIVE_SERVICE_CONFIG') private _config: IDynamicMediaConfig,
+        private _operatorFactory: OperatorFactoryService,
         private _zone: NgZone
     ) {
-        this._snapshot = {
-            isXs: false,
-            isSm: false,
-            isMd: false,
-            isLg: false,
-            isXl: false
-        };
-        this._mediaSize$ = new BehaviorSubject<IMediaSizeMap>(this._snapshot);
+        this._mediaSize$ = new BehaviorSubject<TMediaMap<T>>(this._snapshot);
+        this.addEvents();
     }
 
     private addEvents () {
-        this.setupBreakpoint(this._config.xs, (m, v) => m.isXs = v);
-        this.setupBreakpoint(this._config.sm, (m, v) => m.isSm = v);
-        this.setupBreakpoint(this._config.md, (m, v) => m.isMd = v);
-        this.setupBreakpoint(this._config.lg, (m, v) => m.isLg = v);
-        this.setupBreakpoint(this._config.xl, (m, v) => m.isXl = v);
+        Object.keys(this._config).forEach(key => {
+            const breakpointSettings = this._config[key];
+            this.setupBreakpoint(breakpointSettings, (isActive) => this.snapshot[key] = isActive);
+        });
 
         let previousMap = JSON.stringify(this._snapshot);
         window.addEventListener('resize', () => {
@@ -56,7 +49,7 @@ export class RxResponsiveService {
         });
     }
 
-    private setupBreakpoint(constraint: IBreakpointConstraint, setter: (sizeMap: IMediaSizeMap, value: boolean) => void) {
+    private setupBreakpoint(constraint: IBreakpointConstraint, setter: (isActive: boolean) => void) {
         const queryList = this.createMediaQuery(constraint);
         this.createListener(queryList, setter);
     }
@@ -72,19 +65,13 @@ export class RxResponsiveService {
         return window.matchMedia(breakPointQuery);
     }
 
-    private createListener (mediaQueryList: MediaQueryList, setter: (sizeMap: IMediaSizeMap, value: boolean) => void) {
+    private createListener (mediaQueryList: MediaQueryList, setter: (isActive: boolean) => void) {
         this._zone.runOutsideAngular(() => {
             mediaQueryList.addListener(args => {
-                setter(this._snapshot, args.matches);
+                setter(args.matches);
             });
         });
 
-        setter(this._snapshot, mediaQueryList.matches);
+        setter(mediaQueryList.matches);
     }
-}
-
-function createIsChain (): IMediaChain {
-    return (m: IMediaSizeMap, condition: () => boolean) => {
-        return condition();
-    };
 }
